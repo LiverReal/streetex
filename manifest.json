@@ -1,0 +1,9 @@
+{
+  "name": "Streetex",
+  "short_name": "Streetex",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ff0000",
+  "theme_color": "#ff0000",
+  "orientation": "portrait-primary"
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Streetex</title>
+    <script src="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css">
+
+  </head>
+
+  <body>
+<div id="map"></div>
+<script>
+    var map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6', // style URL
+        center: [21, 0], // starting position [lng, lat]
+        zoom: 16,
+        pitch: 60,      // <— this tilts the map for that 3D effect
+        bearing: -20,   // <— optional: rotate the view a bit
+        antialias: true
+    });
+
+  // Add navigation controls
+  map.addControl(new maplibregl.NavigationControl());
+
+  // Marker to represent current location
+  const userMarker = new maplibregl.Marker({ color: 'red' });
+
+  // Watch position and update map
+  if ('geolocation' in navigator) {
+    navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const userLocation = [longitude, latitude];
+
+        // Update map center to user's location
+        map.setCenter(userLocation);
+
+        // Update or add marker
+        userMarker.setLngLat(userLocation).addTo(map);
+      },
+      (error) => {
+        console.error('Error watching position:', error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 5000
+      }
+    );
+  } else {
+    alert('Geolocation not supported by your browser.');
+  }
+</script>
+</body>
