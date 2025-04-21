@@ -12,34 +12,50 @@
   <body>
 <div id="map"></div>
 <script>
-    var map = new maplibregl.Map({
-        container: 'map', // container id
-        style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6', // style URL
-        center: [21, 0], // starting position [lng, lat]
-        zoom: 16,
-        pitch: 60,      // <— this tilts the map for that 3D effect
-        bearing: -20,   // <— optional: rotate the view a bit
-        antialias: true
-    });
+  var map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6',
+    center: [21, 0],
+    zoom: 17,
+    pitch: 60,
+    bearing: 0,
+    antialias: true
+  });
 
-  // Add navigation controls
   map.addControl(new maplibregl.NavigationControl());
 
-  // Marker to represent current location
   const userMarker = new maplibregl.Marker({ color: 'red' });
 
-  // Watch position and update map
+  let currentHeading = 0;
+
+  // Try to get heading from device
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientationabsolute', (event) => {
+      if (event.absolute && event.alpha !== null) {
+        currentHeading = 360 - event.alpha; // convert to compass-style
+      }
+    }, true);
+  }
+
   if ('geolocation' in navigator) {
     navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         const userLocation = [longitude, latitude];
 
-        // Update map center to user's location
-        map.setCenter(userLocation);
-
-        // Update or add marker
+        // Update user marker
         userMarker.setLngLat(userLocation).addTo(map);
+
+        // Smoothly move map like Pokémon GO
+        map.easeTo({
+          center: userLocation,
+          bearing: currentHeading,
+          pitch: 60,
+          zoom: 17,
+          duration: 1000,
+          offset: [0, window.innerHeight / 4 * -1],
+          easing: t => t
+        });
       },
       (error) => {
         console.error('Error watching position:', error.message);
