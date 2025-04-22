@@ -16,11 +16,11 @@
         style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6', // style URL
         center: [10.482593, 59.416571], // starting position [lng, lat]
         zoom: 16, // starting zoom
-        pitch: 100,
-        bearing: 100
+        pitch: 60,
+        bearing: 0
 
     });
-
+  
 map.on('load', () => {
     map.loadImage('http://127.0.0.1:8000/grass.png', (error, image) => {
     if (error) {
@@ -32,14 +32,11 @@ map.on('load', () => {
     if (!map.hasImage('grass-texture')) {
       console.log('Adding image to the map');
       map.addImage('grass-texture', image);
+      map.setPaintProperty('water', 'fill-pattern', 'grass-texture');
     }
     });
-    map.setPaintProperty('water', 'fill-pattern', 'grass-texture');
-    map.setPaintProperty('water', 'fill-color', '#000000');
-  const layers = map.getStyle().layers;
-  layers.forEach(layer => {
-    console.log(layer.id, layer.type); // Check the layer ID and type
-  });
 });
+
+
 </script>
 </body>
