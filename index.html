@@ -6,111 +6,40 @@
      <script src="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.js"></script>
      <link href="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.css" rel="stylesheet" />
      <link rel="stylesheet" href="styles.css">
+</head>
  
-   </head>
- 
-   <body>
-   
+<body>
+<div id="map"></div>
 <script>
-  var map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6',
-    center: [21, 0],
-    zoom: 17,
-    pitch: 60,
-    bearing: 0,
-    antialias: true
-  });
+    let map = new maplibregl.Map({
+        container: 'map', // container id
+        style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6', // style URL
+        center: [10.482593, 59.416571], // starting position [lng, lat]
+        zoom: 16, // starting zoom
+        pitch: 100,
+        bearing: 100
 
-  map.addControl(new maplibregl.NavigationControl());
+    });
 
-  const userMarker = new maplibregl.Marker({ color: 'red' });
-
-  let currentHeading = 0;
-
-  // Try to get compass heading
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientationabsolute', (event) => {
-      if (event.absolute && event.alpha !== null) {
-        currentHeading = 360 - event.alpha;
-      }
-    }, true);
-  }
-
-  // Load saved path from localStorage
-  let saved = localStorage.getItem('userPath');
-  let userPath = saved ? JSON.parse(saved) : {
-    type: 'Feature',
-    geometry: {
-      type: 'LineString',
-      coordinates: []
+map.on('load', () => {
+    map.loadImage('http://127.0.0.1:8000/grass.png', (error, image) => {
+    if (error) {
+      console.error('Error loading image:', error);
+      return; // If there's an error loading the image, stop the process.
     }
-  };
 
-  // When map is ready, add the line layer
-  map.on('load', () => {
-    map.addSource('user-path', {
-      type: 'geojson',
-      data: userPath
+    // Check if the image is already added to the map
+    if (!map.hasImage('grass-texture')) {
+      console.log('Adding image to the map');
+      map.addImage('grass-texture', image);
+    }
     });
-
-    map.addLayer({
-      id: 'user-path-line',
-      type: 'line',
-      source: 'user-path',
-      layout: {
-        'line-cap': 'round',
-        'line-join': 'round'
-      },
-      paint: {
-        'line-color': '#ff0000',
-        'line-width': 4
-      }
-    });
+    map.setPaintProperty('water', 'fill-pattern', 'grass-texture');
+    map.setPaintProperty('water', 'fill-color', '#000000');
+  const layers = map.getStyle().layers;
+  layers.forEach(layer => {
+    console.log(layer.id, layer.type); // Check the layer ID and type
   });
-
-  // Update location and path
-  if ('geolocation' in navigator) {
-    navigator.geolocation.watchPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const userLocation = [longitude, latitude];
-
-        // Update marker
-        userMarker.setLngLat(userLocation).addTo(map);
-
-        // Update path
-        userPath.geometry.coordinates.push(userLocation);
-
-        // Save path to localStorage
-        localStorage.setItem('userPath', JSON.stringify(userPath));
-
-        // Update map source
-        const source = map.getSource('user-path');
-        if (source) source.setData(userPath);
-
-        // Move camera
-        map.easeTo({
-          center: userLocation,
-          bearing: currentHeading,
-          pitch: 60,
-          zoom: 17,
-          duration: 1000,
-          offset: [0, window.innerHeight / 4 * -1],
-          easing: t => t
-        });
-      },
-      (error) => {
-        console.error('Geolocation error:', error.message);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 5000
-      }
-    );
-  } else {
-    alert('Geolocation not supported by your browser.');
-  }
+});
 </script>
 </body>
