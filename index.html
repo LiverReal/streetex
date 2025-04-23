@@ -13,29 +13,14 @@
 <script>
     let map = new maplibregl.Map({
         container: 'map', // container id
-        style: 'https://api.protomaps.com/styles/v5/light/en.json?key=50ad6769afe3dbd6', // style URL
+        style: 'style.json', // style URL
         center: [10.482593, 59.416571], // starting position [lng, lat]
         zoom: 16, // starting zoom
-        pitch: 60,
+        pitch: 75,
+        maxPitch: 75,
         bearing: 0
 
     });
-  
-map.on('load', () => {
-    map.loadImage('http://127.0.0.1:8000/grass.png', (error, image) => {
-    if (error) {
-      console.error('Error loading image:', error);
-      return; // If there's an error loading the image, stop the process.
-    }
-
-    // Check if the image is already added to the map
-    if (!map.hasImage('grass-texture')) {
-      console.log('Adding image to the map');
-      map.addImage('grass-texture', image);
-      map.setPaintProperty('water', 'fill-pattern', 'grass-texture');
-    }
-    });
-});
 
 
 </script>

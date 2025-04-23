@@ -1,0 +1,80 @@
+{
+  "version": 8,
+  "name": "Empty Style",
+  "metadata": {},
+  "light": {"anchor": "viewport", "intensity": 0.5},
+  "sources": {
+    "tilejson protomaps": {
+      "type": "vector",
+      "url": "https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6"
+    }
+  },
+  "sprite": "https://liverreal.github.io/streetex/sprite",
+  "glyphs": "https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "earth",
+      "type": "fill",
+      "source": "tilejson protomaps",
+      "source-layer": "earth",
+      "paint": {"fill-color": "rgba(39, 140, 39, 1)", "fill-pattern": "grass"}
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "tilejson protomaps",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "rgba(69, 212, 223, 1)",
+        "fill-outline-color": "rgba(255, 251, 117, 1)"
+      }
+    },
+    {
+      "id": "landuse",
+      "type": "fill",
+      "source": "tilejson protomaps",
+      "source-layer": "landuse",
+      "filter": ["all", ["==", "name", "grass"]],
+      "layout": {"visibility": "visible"},
+      "paint": {"fill-color": "rgba(0, 223, 35, 1)"}
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "tilejson protomaps",
+      "source-layer": "roads",
+      "minzoom": 16,
+      "filter": ["all"],
+      "layout": {
+        "line-join": "miter",
+        "line-cap": "round",
+        "visibility": "visible"
+      },
+      "paint": {
+        "line-color": "rgba(0, 0, 0, 1)",
+        "line-blur": 0,
+        "line-width": 2
+      }
+    },
+    {
+      "id": "beach",
+      "type": "fill",
+      "source": "tilejson protomaps",
+      "source-layer": "landuse",
+      "filter": ["all", ["==", "kind", "beach"]],
+      "paint": {"fill-color": "rgba(241, 234, 88, 1)"}
+    },
+    {
+      "id": "buildings",
+      "type": "fill-extrusion",
+      "source": "tilejson protomaps",
+      "source-layer": "buildings",
+      "paint": {
+        "fill-extrusion-height": 2,
+        "fill-extrusion-color": "rgba(223, 223, 223, 1)",
+        "fill-extrusion-opacity": 0.3
+      }
+    }
+  ],
+  "id": "kftkgz6"
+}
