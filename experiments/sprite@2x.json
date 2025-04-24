@@ -1,0 +1,9 @@
+{
+  "grass": {
+    "width": 512,
+    "height": 512,
+    "x": 0,
+    "y": 0,
+    "pixelRatio": 1
+  }
+}
