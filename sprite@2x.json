@@ -1,33 +1,33 @@
 {
-  "park": {
+  "gravel": {
     "width": 512,
     "height": 512,
     "x": 0,
     "y": 0,
     "pixelRatio": 1
   },
-  "grass": {
+  "sidewalk": {
     "width": 512,
     "height": 512,
     "x": 512,
     "y": 0,
     "pixelRatio": 1
   },
-  "water": {
+  "grass": {
     "width": 512,
     "height": 512,
     "x": 1024,
     "y": 0,
     "pixelRatio": 1
   },
-  "sand": {
+  "water": {
     "width": 512,
     "height": 512,
     "x": 1536,
     "y": 0,
     "pixelRatio": 1
   },
-    "concrete": {
+    "park": {
     "width": 512,
     "height": 512,
     "x": 2048,
