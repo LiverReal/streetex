@@ -11,7 +11,7 @@
       "url": "https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6"
     }
   },
-  "sprite": "https://localhost:4443/sprite",
+  "sprite": "https://liverreal.github.io/streetex",
   "glyphs": "https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf",
   "layers": [
     {
