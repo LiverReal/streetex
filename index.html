@@ -1,80 +1,382 @@
 <!DOCTYPE html>
- <html>
- 
-   <head>
-     <title>Streetex</title>
-     <script src="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.js"></script>
-     <link href="https://unpkg.com/maplibre-gl@^5.4.0/dist/maplibre-gl.css" rel="stylesheet" />
-     <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
-     
-     <link rel="stylesheet" href="styles.css">
+<html lang="en">
+<head>
+    <title>i spent a lot of time on this</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta property="og:description" content="next pogo clone" />
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map {
+        height: 100%;
+        }
+    </style>
 </head>
- 
 <body>
-<div id="map"></div>
-<script>
-    let map = new maplibregl.Map({
-        container: 'map', // container id
-        style: 'style.json', // style URL
-        center: [10.482593, 59.416571], // starting position [lng, lat]
-        zoom: 16, // starting zoom
-        pitch: 70,
-        maxPitch: 80,
-        bearing: 0,
-        antialias: true
-
-    });
-
-map.on('load', () => {
-    const layers = map.getStyle().layers;
-    layers.forEach(layer => {
-        console.log(layer.id, layer.type); // Check the layer ID and type
-    });
-  const customLayer = {
-    id: 'threejs-layer',
-    type: 'custom',
-    renderingMode: '3d',
-    onAdd(map, gl) {
-      // Init THREE scene
-      this.camera = new THREE.Camera();
-      this.scene = new THREE.Scene();
-
-      this.renderer = new THREE.WebGLRenderer({
-        canvas: map.getCanvas(),
-        context: gl,
-        antialias: true
-      });
-      this.renderer.autoClear = false;
-
-      // Add a 3D model or character (e.g. a cube as placeholder)
-      const geometry = new THREE.BoxGeometry(10, 10, 10);
-      const material = new THREE.MeshNormalMaterial();
-      this.mesh = new THREE.Mesh(geometry, material);
-      this.scene.add(this.mesh);
-
-      // Example: Set initial position in Mercator coordinates
-      const merc = maplibregl.MercatorCoordinate.fromLngLat(
-        [10.482593, 59.416571], 0
-      );
-      this.mesh.position.set(merc.x, merc.y, merc.z);
-    },
-
-    render(gl, matrix) {
-      // Convert MapLibre matrix to Three.js projection
-      const m = new THREE.Matrix4().fromArray(matrix);
-      this.camera.projectionMatrix = m;
-      this.renderer.state.reset();
-      this.renderer.render(this.scene, this.camera);
-      map.triggerRepaint();
+<script type="importmap">
+    {
+        "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
     }
-  };
+</script>
+<div id="map"></div>
 
-  map.addLayer(customLayer);
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const map = new maplibregl.Map({
+        container: 'map',
+        style:
+            'https://localhost:4443/style.json',
+        zoom: 18,
+        maxZoom: 19,
+        minZoom: 16,
+        center: [-74.0066, 40.7135],
+        pitch: 75,
+        maxPitch: 75,
+        interactive: true,
+        projection: 'globe',
+        canvasContextAttributes: {antialias: true} // create the gl context with MSAA antialiasing, so custom layers are antialiased
+    });
+
+    // parameters to ensure the model is georeferenced correctly on the map
+    const modelOrigin = [-74.0066, 40.7135];
+    const modelAltitude = 0;
+    const modelRotate = [Math.PI / 2, 0, 0];
+
+    const modelAsMercatorCoordinate = maplibregl.MercatorCoordinate.fromLngLat(
+        modelOrigin,
+        modelAltitude
+    );
+
+    // transformation parameters to position, rotate and scale the 3D model onto the map
+    const modelTransform = {
+        translateX: modelAsMercatorCoordinate.x,
+        translateY: modelAsMercatorCoordinate.y,
+        translateZ: modelAsMercatorCoordinate.z,
+        rotateX: modelRotate[0],
+        rotateY: modelRotate[1],
+        rotateZ: modelRotate[2],
+        /* Since our 3D model is in real world meters, a scale transform needs to be
+        * applied since the CustomLayerInterface expects units in MercatorCoordinates.
+        */
+        scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+    };
+
+
+        const customLayer = {
+            id: '3d-model',
+            type: 'custom',
+            renderingMode: '3d',
+            onAdd(map, gl) {
+                this.camera = new THREE.Camera();
+                this.scene = new THREE.Scene();
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(100, 100, 100);
+                directionalLight.castShadow = true;
+                this.scene.add(directionalLight);
+
+                directionalLight.shadow.camera.near = 0.1;
+                directionalLight.shadow.camera.far = 2000;
+                directionalLight.shadow.camera.left = -500;
+                directionalLight.shadow.camera.right = 500;
+                directionalLight.shadow.camera.top = 500;
+                directionalLight.shadow.camera.bottom = -500;
+
+                directionalLight.shadow.mapSize.width = 4096;
+                directionalLight.shadow.mapSize.height = 4096;
+
+                const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+                const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.5 });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = modelAsMercatorCoordinate.z + 0.01;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+this.currentPosition = {
+    x: modelTransform.translateX,
+    y: modelTransform.translateY,
+    z: modelTransform.translateZ
+};
+
+this.targetPosition = {
+    x: modelTransform.translateX,
+    y: modelTransform.translateY,
+    z: modelTransform.translateZ
+};
+
+                const loader = new GLTFLoader();
+                loader.load(
+                    'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf',
+                    (gltf) => {
+                        gltf.scene.traverse(function (node) {
+                            if (node.isMesh || node.isLight) {
+                                node.castShadow = true;
+                                node.receiveShadow = true;
+                            }
+                        });
+                        this.model = gltf.scene;
+                        this.scene.add(this.model);
+
+                    }
+                );
+                this.map = map;
+
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: map.getCanvas(),
+                    context: gl,
+                    antialias: true
+                });
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                this.renderer.autoClear = false;
+            },
+            render(gl, args) {
+
+//model loop
+
+if (this.model) {
+this.model.rotation.y += 0.01; // Rotate around Y-axis
+this.model.position.y += 0; // Move up
+}
+
+// Smooth interpolation (lerp)
+const lerpFactor = 0.4; // Adjust for speed (closer to 1 = faster)
+this.currentPosition.x += (this.targetPosition.x - this.currentPosition.x) * lerpFactor;
+this.currentPosition.y += (this.targetPosition.y - this.currentPosition.y) * lerpFactor;
+this.currentPosition.z += (this.targetPosition.z - this.currentPosition.z) * lerpFactor;
+
+
+                const rotationX = new THREE.Matrix4().makeRotationAxis(
+                    new THREE.Vector3(1, 0, 0),
+                    modelTransform.rotateX
+                );
+                const rotationY = new THREE.Matrix4().makeRotationAxis(
+                    new THREE.Vector3(0, 1, 0),
+                    modelTransform.rotateY
+                );
+                const rotationZ = new THREE.Matrix4().makeRotationAxis(
+                    new THREE.Vector3(0, 0, 1),
+                    modelTransform.rotateZ
+                );
+
+                const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
+                const l = new THREE.Matrix4()
+.makeTranslation(
+    this.currentPosition.x,
+    this.currentPosition.y,
+    this.currentPosition.z
+)
+
+                    .scale(
+                        new THREE.Vector3(
+                            modelTransform.scale,
+                            -modelTransform.scale,
+                            modelTransform.scale
+                        )
+                    )
+                    .multiply(rotationX)
+                    .multiply(rotationY)
+                    .multiply(rotationZ);
+
+                this.camera.projectionMatrix = m.multiply(l);
+                this.renderer.resetState();
+                this.renderer.render(this.scene, this.camera);
+                this.map.triggerRepaint();
+            }
+        };
+
+function mercatorToLngLat(x, y) {
+    const R = 6378137;
+    const lng = (x / R) * (180 / Math.PI);
+    const lat = (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * (180 / Math.PI);
+    return [lng, lat];
+}
+
+function moveModelTo(lngLat) {
+    const newMerc = maplibregl.MercatorCoordinate.fromLngLat(lngLat, modelAltitude);
+    customLayer.targetPosition = {
+        x: newMerc.x,
+        y: newMerc.y,
+        z: newMerc.z
+    };
+}
+
+// Add geolocate control to the map (shows a button)
+const geolocateControl = new maplibregl.GeolocateControl({
+  positionOptions: {
+    enableHighAccuracy: true
+  },
+  trackUserLocation: true,
+  showUserHeading: true,
+  showUserLocation: false
+});
+map.addControl(geolocateControl);
+
+// Listen for location updates
+geolocateControl.on('geolocate', (event) => {
+  const { latitude, longitude, accuracy } = event.coords;
+  console.log(`You are at ${latitude}, ${longitude} with accuracy of ${accuracy} meters.`);
+    setTimeout(() => moveModelTo([longitude, latitude]), 0);
+    console.log(map.getCenter());
 });
 
 
+// Day and night colors for sky and fog
+const daySkyColor = "#72e7ff";
+const nightSkyColor = "#0a0a25";
 
+const dayFogColor = "#3a54ff";
+const nightFogColor = "#050514";
+
+function lerpColor(colorStart, colorEnd, t) {
+    // Helper to parse a hex color string like "#RRGGBB" into [red, green, blue] integers
+    const parseHexColor = (hexColor) => 
+        hexColor.match(/\w\w/g).map(component => parseInt(component, 16));
+
+    const [startRed, startGreen, startBlue] = parseHexColor(colorStart);
+    const [endRed, endGreen, endBlue] = parseHexColor(colorEnd);
+
+    const lerpRed = Math.round(startRed + (endRed - startRed) * t);
+    const lerpGreen = Math.round(startGreen + (endGreen - startGreen) * t);
+    const lerpBlue = Math.round(startBlue + (endBlue - startBlue) * t);
+
+    return `rgb(${lerpRed},${lerpGreen},${lerpBlue})`;
+}
+
+
+// Assume sunAltitude is in radians, 0 at horizon, PI/2 overhead
+function updateSkyAndFog(sunAltitude) {
+    // Normalize sunAltitude to 0..1 where 0 = night, 1 = day
+    const t = Math.min(Math.max(sunAltitude / (Math.PI / 2), 0), 1);
+
+    const skyColor = lerpColor(nightSkyColor, daySkyColor, t);
+    const fogColor = lerpColor(nightFogColor, dayFogColor, t);
+
+    map.setSky({
+        'sky-color': skyColor,
+        'sky-horizon-blend': 1,
+        'horizon-color': "#bcfcff",
+        'horizon-fog-blend': 0.5,
+        'fog-color': fogColor,
+        'fog-ground-blend': 0.2
+    });
+}
+
+
+
+    map.on('load', () => {
+        map.addLayer(customLayer, "buildings");
+
+map.addSource('flat-dem', {
+  type: 'raster-dem',
+  tiles: ['tiles/{z}/{x}/{y}.png'],
+  tileSize: 256,
+  encoding: 'mapbox',
+  minzoom: 0,
+  maxzoom: 2, // 👈 prevent requests for missing tiles
+});
+
+    map.setTerrain({ source: 'flat-dem', exaggeration: 0 });
+    
+    map.setSky({
+        'sky-color': "#72e7ff",
+        'sky-horizon-blend': 1,
+        'horizon-color': "#bcfcff",
+        'horizon-fog-blend': 0.5,
+        'fog-color': "#61b2f4",
+        'fog-ground-blend': 0.2
+    });
+
+    map.dragRotate.enable();    // allow rotation by mouse drag (desktop)
+map.touchZoomRotate.enable(); // allow pinch zoom and rotation (mobile)
+
+map.dragPan.disable();      // disable panning (desktop + mobile)
+
+map.keyboard.disable();     // disable keyboard navigation (optional)
+
+map.scrollZoom.disable();   // disable scroll wheel zoom (optional)
+map.boxZoom.disable();      // disable box zoom (optional)
+map.doubleClickZoom.disable(); // disable zoom on double click (optional)
+
+let zoomSensitivity = 0.001;
+
+map.getCanvas().addEventListener('wheel', (event) => {
+  event.preventDefault();
+
+  // Calculate zoom delta (invert wheel direction if needed)
+  let delta = -event.deltaY * zoomSensitivity;
+
+  // Clamp zoom within map's min/max zoom
+  let newZoom = map.getZoom() + delta;
+  newZoom = Math.min(Math.max(newZoom, map.getMinZoom()), map.getMaxZoom());
+
+  map.zoomTo(newZoom, { duration: 200 });
+}, { passive: false });
+
+let currentLng = 0;
+let currentLat = 0;
+
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    let { currentLat, currentLng } = position.coords;
+    console.log(`Current position: ${currentLat}, ${currentLng}`);
+  },
+  (error) => {
+    console.error('Geolocation error:', error);
+  },
+  {
+    enableHighAccuracy: true
+  }
+);
+
+console.log(currentLat, currentLng);
+const now = new Date();
+
+const sunPos = SunCalc.getPosition(now, currentLat, currentLng);
+const sunAltitude = sunPos.altitude; // radians, -PI/2 to PI/2
+
+updateSkyAndFog(sunAltitude);
+console.log(sunAltitude);
+
+
+setTimeout(() => console.log(currentLat, currentLng), 1000);
+setTimeout(() => console.log(map.getCenter()), 1000);
+
+});
+
+map.on('render', () => {
+  if (customLayer.currentPosition) {
+    const mercatorCoord = new maplibregl.MercatorCoordinate(
+      customLayer.currentPosition.x,
+      customLayer.currentPosition.y,
+      customLayer.currentPosition.z
+    );
+    const lngLat = mercatorCoord.toLngLat();
+
+    const currentCenter = map.getCenter();
+    // Check if position changed enough (use a tiny threshold)
+    const threshold = 1e-7; // adjust if needed
+    const lngDiff = Math.abs(lngLat.lng - currentCenter.lng);
+    const latDiff = Math.abs(lngLat.lat - currentCenter.lat);
+
+    if (lngDiff > threshold || latDiff > threshold) {
+      map.jumpTo({ center: [lngLat.lng, lngLat.lat] });
+    }
+  }
+
+});
 
 </script>
-
 </body>
+</html>
