@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>i spent a lot of time on this</title>
+    <title>street explore</title>
     <link rel="manifest" href="manifest.json" />
     <meta property="og:description" content="next pogo clone" />
     <meta charset='utf-8'>
@@ -14,6 +14,8 @@
         body { margin: 0; padding: 0; }
         html, body, #map {
         height: 100%;
+        width: 100vw;
+        position: fixed;
         }
     </style>
 </head>
@@ -39,7 +41,7 @@
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
-        center: [-74.0066, 40.7135],
+        center: [59.408384, 10.452992],
         pitch: 75,
         maxPitch: 75,
         interactive: true,
@@ -48,7 +50,7 @@
     });
 
     // parameters to ensure the model is georeferenced correctly on the map
-    const modelOrigin = [-74.0066, 40.7135];
+    const modelOrigin = [59.408384, 10.452992];
     const modelAltitude = 0;
     const modelRotate = [Math.PI / 2, 0, 0];
 
@@ -146,7 +148,7 @@ this.targetPosition = {
 //model loop
 
 if (this.model) {
-this.model.rotation.y += 0.01; // Rotate around Y-axis
+this.model.rotation.y += 0.001; // Rotate around Y-axis
 this.model.position.y += 0; // Move up
 }
 
@@ -228,16 +230,26 @@ geolocateControl.on('geolocate', (event) => {
   const { latitude, longitude, accuracy } = event.coords;
   console.log(`You are at ${latitude}, ${longitude} with accuracy of ${accuracy} meters.`);
     setTimeout(() => moveModelTo([longitude, latitude]), 0);
-    console.log(map.getCenter());
+    const now = new Date();
+    //const now = new Date("Mon May 19 2025 13:19:15 GMT+0100 (British Summer Time)");
+    //const now = new Date("Mon May 19 2025 23:19:15 GMT+0100 (British Summer Time)");
+    //const now = new Date("Mon May 19 2025 19:19:15 GMT+0100 (British Summer Time)");
+    const sunPos = SunCalc.getPosition(now, latitude, longitude);
+    const sunAltitude = sunPos.altitude; // radians, -PI/2 to PI/2
+    console.log(`The sun is at ${sunAltitude}, and your date is ${now}`);
+    updateSkyLight(sunAltitude);
 });
 
 
 // Day and night colors for sky and fog
 const daySkyColor = "#72e7ff";
-const nightSkyColor = "#0a0a25";
+const nightSkyColor = "#010338";
 
-const dayFogColor = "#3a54ff";
-const nightFogColor = "#050514";
+const dayFogColor = "#61b2f4";
+const nightFogColor = "#10125c";
+
+const dayHorizonColor = "#bcfcff";
+const nightHorizonColor = "#23254a";
 
 function lerpColor(colorStart, colorEnd, t) {
     // Helper to parse a hex color string like "#RRGGBB" into [red, green, blue] integers
@@ -254,29 +266,29 @@ function lerpColor(colorStart, colorEnd, t) {
     return `rgb(${lerpRed},${lerpGreen},${lerpBlue})`;
 }
 
-
 // Assume sunAltitude is in radians, 0 at horizon, PI/2 overhead
-function updateSkyAndFog(sunAltitude) {
+function updateSkyLight(sunAltitude) {
     // Normalize sunAltitude to 0..1 where 0 = night, 1 = day
-    const t = Math.min(Math.max(sunAltitude / (Math.PI / 2), 0), 1);
+    const t = Math.min(Math.max(sunAltitude * 2, 0), 1);
+    console.log(`Sunaltitude: ${sunAltitude}, t for colorLerp: ${t}, sunAltitude math operation: ${sunAltitude * 2}`)
 
     const skyColor = lerpColor(nightSkyColor, daySkyColor, t);
     const fogColor = lerpColor(nightFogColor, dayFogColor, t);
+    const horizonColor = lerpColor(nightHorizonColor, dayHorizonColor, t);
 
     map.setSky({
         'sky-color': skyColor,
         'sky-horizon-blend': 1,
-        'horizon-color': "#bcfcff",
+        'horizon-color': horizonColor,
         'horizon-fog-blend': 0.5,
         'fog-color': fogColor,
         'fog-ground-blend': 0.2
     });
 }
 
-
-
     map.on('load', () => {
-        map.addLayer(customLayer, "buildings");
+        map.addLayer(customLayer);
+        setTimeout(() => moveModelTo([59.408384, 10.452992]), 0);
 
 map.addSource('flat-dem', {
   type: 'raster-dem',
@@ -284,7 +296,7 @@ map.addSource('flat-dem', {
   tileSize: 256,
   encoding: 'mapbox',
   minzoom: 0,
-  maxzoom: 2, // 👈 prevent requests for missing tiles
+  maxzoom: 0, // 👈 prevent requests for missing tiles
 });
 
     map.setTerrain({ source: 'flat-dem', exaggeration: 0 });
@@ -309,7 +321,7 @@ map.scrollZoom.disable();   // disable scroll wheel zoom (optional)
 map.boxZoom.disable();      // disable box zoom (optional)
 map.doubleClickZoom.disable(); // disable zoom on double click (optional)
 
-let zoomSensitivity = 0.001;
+let zoomSensitivity = 0.002;
 
 map.getCanvas().addEventListener('wheel', (event) => {
   event.preventDefault();
@@ -324,34 +336,6 @@ map.getCanvas().addEventListener('wheel', (event) => {
   map.zoomTo(newZoom, { duration: 200 });
 }, { passive: false });
 
-let currentLng = 0;
-let currentLat = 0;
-
-navigator.geolocation.getCurrentPosition(
-  (position) => {
-    let { currentLat, currentLng } = position.coords;
-    console.log(`Current position: ${currentLat}, ${currentLng}`);
-  },
-  (error) => {
-    console.error('Geolocation error:', error);
-  },
-  {
-    enableHighAccuracy: true
-  }
-);
-
-console.log(currentLat, currentLng);
-const now = new Date();
-
-const sunPos = SunCalc.getPosition(now, currentLat, currentLng);
-const sunAltitude = sunPos.altitude; // radians, -PI/2 to PI/2
-
-updateSkyAndFog(sunAltitude);
-console.log(sunAltitude);
-
-
-setTimeout(() => console.log(currentLat, currentLng), 1000);
-setTimeout(() => console.log(map.getCenter()), 1000);
 
 });
 

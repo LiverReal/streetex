@@ -300,14 +300,14 @@
       "source": "tilejson protomaps",
       "source-layer": "buildings",
       "minzoom": 12,
-      "layout": {"visibility": "visible"},
+      "layout": {"visibility": "none"},
       "paint": {
         "fill-extrusion-color": "rgba(233, 233, 233, 1)",
-        "fill-extrusion-height": ["coalesce", ["get", "height"], 7],
+        "fill-extrusion-height": ["coalesce", ["get", "height"], 4],
         "fill-extrusion-vertical-gradient": false,
         "fill-extrusion-translate-anchor": "map",
         "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": 0.2
+        "fill-extrusion-opacity": 0
       }
     },
     {

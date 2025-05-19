@@ -1,0 +1,9 @@
+
+debug map api: 
+https://tiles.openfreemap.org/styles/liberty
+
+my map api:
+https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6
+https://liverreal.github.io/streetex/style.json
+
+it only works for my github page so you cant do anything with the key
