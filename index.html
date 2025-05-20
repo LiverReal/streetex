@@ -7,17 +7,11 @@
     <meta charset='utf-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
     <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css' />
     <script src='https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
-    <style>
-        body { margin: 0; padding: 0; }
-        html, body, #map {
-        height: 100%;
-        width: 100vw;
-        position: fixed;
-        }
-    </style>
+
 </head>
 <body>
 <script type="importmap">
@@ -31,19 +25,27 @@
 <div id="map"></div>
 
 <script type="module">
+
+//global vars
+const lerpFactor = 0.4; // Adjust for speed (closer to 1 = faster)
+let newBearing = 0;
+let newPitch = 0;
+let maxPitch = 80;
+let minPitch = 0;
+
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     const map = new maplibregl.Map({
         container: 'map',
         style:
-            'https://liverreal.github.io/streetex/style.json',
+            'https://tiles.openfreemap.org/styles/liberty',
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
         center: [59.408384, 10.452992],
         pitch: 75,
-        maxPitch: 75,
+        maxPitch: 80,
         interactive: true,
         projection: 'globe',
         canvasContextAttributes: {antialias: true} // create the gl context with MSAA antialiasing, so custom layers are antialiased
@@ -153,7 +155,7 @@ this.model.position.y += 0; // Move up
 }
 
 // Smooth interpolation (lerp)
-const lerpFactor = 0.4; // Adjust for speed (closer to 1 = faster)
+
 this.currentPosition.x += (this.targetPosition.x - this.currentPosition.x) * lerpFactor;
 this.currentPosition.y += (this.targetPosition.y - this.currentPosition.y) * lerpFactor;
 this.currentPosition.z += (this.targetPosition.z - this.currentPosition.z) * lerpFactor;
@@ -214,7 +216,7 @@ function moveModelTo(lngLat) {
     };
 }
 
-// Add geolocate control to the map (shows a button)
+// move to your own location
 const geolocateControl = new maplibregl.GeolocateControl({
   positionOptions: {
     enableHighAccuracy: true
@@ -225,7 +227,7 @@ const geolocateControl = new maplibregl.GeolocateControl({
 });
 map.addControl(geolocateControl);
 
-// Listen for location updates
+//check  for new location
 geolocateControl.on('geolocate', (event) => {
   const { latitude, longitude, accuracy } = event.coords;
   console.log(`You are at ${latitude}, ${longitude} with accuracy of ${accuracy} meters.`);
@@ -286,9 +288,11 @@ function updateSkyLight(sunAltitude) {
     });
 }
 
+
+
     map.on('load', () => {
+//first adding visuals
         map.addLayer(customLayer);
-        setTimeout(() => moveModelTo([59.408384, 10.452992]), 0);
 
 map.addSource('flat-dem', {
   type: 'raster-dem',
@@ -299,8 +303,8 @@ map.addSource('flat-dem', {
   maxzoom: 0, // 👈 prevent requests for missing tiles
 });
 
-    map.setTerrain({ source: 'flat-dem', exaggeration: 0 });
-    
+    //map.setTerrain({ source: 'flat-dem', exaggeration: 0 });
+
     map.setSky({
         'sky-color': "#72e7ff",
         'sky-horizon-blend': 1,
@@ -310,8 +314,9 @@ map.addSource('flat-dem', {
         'fog-ground-blend': 0.2
     });
 
-    map.dragRotate.enable();    // allow rotation by mouse drag (desktop)
-map.touchZoomRotate.enable(); // allow pinch zoom and rotation (mobile)
+//camera movement
+map.dragRotate.disable();    // allow rotation by mouse drag (desktop)
+map.touchZoomRotate.disable(); // allow pinch zoom and rotation (mobile)
 
 map.dragPan.disable();      // disable panning (desktop + mobile)
 
@@ -321,6 +326,7 @@ map.scrollZoom.disable();   // disable scroll wheel zoom (optional)
 map.boxZoom.disable();      // disable box zoom (optional)
 map.doubleClickZoom.disable(); // disable zoom on double click (optional)
 
+//camera zooming (pc)
 let zoomSensitivity = 0.002;
 
 map.getCanvas().addEventListener('wheel', (event) => {
@@ -333,13 +339,72 @@ map.getCanvas().addEventListener('wheel', (event) => {
   let newZoom = map.getZoom() + delta;
   newZoom = Math.min(Math.max(newZoom, map.getMinZoom()), map.getMaxZoom());
 
-  map.zoomTo(newZoom, { duration: 200 });
+  map.zoomTo(newZoom);
 }, { passive: false });
 
+    let isMouseDown = false;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let oldBearing = 0;
+    let oldPitch = 75;
+    let moveY = 0;
+    let lastValidY = 0;
+
+//camera panning (pc)
+    document.addEventListener('mousedown', function(e) {
+      isMouseDown = true;
+      isDragging = false;
+      startX = e.clientX;
+      startY = e.clientY;
+
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isMouseDown) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+    if (map.getPitch() == minPitch || maxPitch == map.getPitch()) {
+        moveY = lastValidY;
+    } else {
+        lastValidY = e.clientY;
+        moveY = e.clientY - startY;
+    }
+      
+
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        isDragging = true;
+        const centerY = window.innerHeight / 2;
+        newBearing = oldBearing + dx/5;
+        newPitch = oldPitch - moveY/5;
+
+        map.setBearing(newBearing);
+        map.setPitch(newPitch);
+
+        //newZoom = Math.min(Math.max(newZoom, map.getMinZoom()), map.getMaxZoom());
+
+        console.log(map.getPitch(), " ", map.getBearing());
+        console.log(`Dragging... dx=${dx}, dy=${dy}`);
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (isDragging) {
+        console.log("drag ended");
+    oldBearing = map.getBearing();
+      oldPitch = map.getPitch();
+      } else {
+        console.log("click");
+      }
+      isMouseDown = false;
+    });
 
 });
 
 map.on('render', () => {
+//update camera to player movement
   if (customLayer.currentPosition) {
     const mercatorCoord = new maplibregl.MercatorCoordinate(
       customLayer.currentPosition.x,
@@ -358,7 +423,6 @@ map.on('render', () => {
       map.jumpTo({ center: [lngLat.lng, lngLat.lat] });
     }
   }
-
 });
 
 </script>
