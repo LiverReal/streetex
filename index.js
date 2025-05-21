@@ -310,11 +310,11 @@ let isTouch = false;
 function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
-  zoomSensitivity = 1; //wont work changing from 1
+  zoomSensitivity = 0.5;
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
     lerpFactorCamera = 0.7;
-    dragWindow = 30;
+    dragWindow = 20;
   window.removeEventListener('touchstart', handleTouch);
 }
 
@@ -413,14 +413,16 @@ document.addEventListener('touchmove', (e) => {
     const currentDistance = getDistance(e.touches[0], e.touches[1]);
     const zoomFactor = currentDistance / initialDistance;
 
+    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${(targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1)}`;
+
     if (zoomFactor > 1.05) {
       touchZooming = true;
       //console.log("Zooming in");
-      targetZoom = (targetZoom * zoomFactor) * zoomSensitivity;
+      targetZoom = (targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1);
     } else if (zoomFactor < 0.95) {
       touchZooming = true;
       //console.log("Zooming out");
-      targetZoom = (targetZoom * zoomFactor) * zoomSensitivity;
+      targetZoom = (targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1);
     }
 
     // Optionally update initialDistance if you want continuous zoom detection
