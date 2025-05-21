@@ -310,7 +310,7 @@ let isTouch = false;
 function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
-  zoomSensitivity = 0.08;
+  zoomSensitivity = 0.001;
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
     lerpFactorCamera = 0.7;
