@@ -8,7 +8,7 @@ const lerpFactorModel = 0.4; // Adjust for speed (closer to 1 = faster)
     const map = new maplibregl.Map({
         container: 'map',
         style:
-            'https://liverreal.github.io/streetex/style.json',
+            'https://tiles.openfreemap.org/styles/liberty',
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
@@ -291,8 +291,10 @@ map.doubleClickZoom.disable(); // disable zoom on double click (optional)
 //zoom vars
 
 // Lerp factor — controls speed (0.1 = 10% per frame)
-const lerpFactorCamera = 0.2;
+let lerpFactorCamera = 0.2;
 let zoomSensitivity = 0.002;
+let bearingSensitivity = 0.1;
+let pitchSensitivity = 0.15;
 
 let currentZoom = map.getZoom();
 let targetZoom = map.getZoom();
@@ -301,6 +303,32 @@ let targetBearing = map.getBearing();
 let currentPitch = map.getPitch();
 let targetPitch = map.getPitch();
 
+let touchZooming = false;
+let isTouch = false;
+
+function handleTouch() {
+  isTouch = true;
+  console.log("User is using touch input");
+  zoomSensitivity = 2;
+    bearingSensitivity = 0.4;
+    pitchSensitivity = 0;
+    lerpFactorCamera = 0.7;
+  window.removeEventListener('touchstart', handleTouch);
+}
+
+function handleMouse() {
+  if (!isTouch) {
+    console.log("User is using mouse input");
+    zoomSensitivity = 0.001;
+    bearingSensitivity = 0.12;
+    pitchSensitivity = 0.13;
+    lerpFactorCamera = 0.3;
+  }
+  window.removeEventListener('mousemove', handleMouse);
+}
+
+window.addEventListener('touchstart', handleTouch, { once: true });
+window.addEventListener('mousemove', handleMouse, { once: true });
 
 //camera zooming (pc)
 
@@ -341,23 +369,23 @@ map.getCanvas().addEventListener('wheel', (event) => {
       if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
         isDragging = true;
         const centerY = window.innerHeight / 2;
-        targetBearing = oldBearing + dx/5;
-        oldPitch = Math.min(Math.max(oldPitch, map.getMinPitch()), map.getMaxPitch());
-        targetPitch = oldPitch - dy/5;
-        console.log(oldPitch - dy/5);
-        //newZoom = Math.min(Math.max(newZoom, map.getMinZoom()), map.getMaxZoom());
+        if (!touchZooming) {
+          targetBearing = oldBearing + dx*bearingSensitivity;
+          oldPitch = Math.min(Math.max(oldPitch, map.getMinPitch()), map.getMaxPitch());
+          targetPitch = oldPitch - dy*pitchSensitivity;
+        }
 
-        console.log(`Dragging... dx=${dx}, dy=${dy}`);
+        //console.log(`Dragging... dx=${dx}, dy=${dy}`);
       }
     });
 
     document.addEventListener('pointerup', function() {
       if (isDragging) {
-        console.log("drag ended");
+        //console.log("drag ended");
     oldBearing = targetBearing;
       oldPitch = targetPitch;
       } else {
-        console.log("click");
+        //console.log("click");
       }
       isMouseDown = false;
     });
@@ -383,11 +411,13 @@ document.addEventListener('touchmove', (e) => {
     const zoomFactor = currentDistance / initialDistance;
 
     if (zoomFactor > 1.05) {
-      console.log("Zooming in");
-      targetZoom = targetZoom * zoomFactor;
+      touchZooming = true;
+      //console.log("Zooming in");
+      targetZoom = (targetZoom * zoomFactor) * zoomSensitivity;
     } else if (zoomFactor < 0.95) {
-      console.log("Zooming out");
-      targetZoom = targetZoom * zoomFactor;
+      touchZooming = true;
+      //console.log("Zooming out");
+      targetZoom = (targetZoom * zoomFactor) * zoomSensitivity;
     }
 
     // Optionally update initialDistance if you want continuous zoom detection
@@ -397,10 +427,12 @@ document.addEventListener('touchmove', (e) => {
 
 document.addEventListener('touchend', () => {
   initialDistance = null;
+  touchZooming = false;
 });
 
 document.addEventListener('touchcancel', () => {
   initialDistance = null;
+  touchZooming = false;
 });
 
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
@@ -413,7 +445,7 @@ function lerp(start, end, t) {
 
 function animateCamera() {
 
-    console.log(targetZoom, targetPitch)
+    //console.log(targetZoom, targetPitch)
     targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
     targetPitch = Math.min(Math.max(targetPitch, map.getMinPitch()), map.getMaxPitch());
 
@@ -433,7 +465,7 @@ animateCamera();
 console.log('All resources finished loading! (mostly)');
     setTimeout(() => { 
         document.getElementById("map").style.opacity = 1;
-    }, 500);
+    }, 300);
 
 
 });
