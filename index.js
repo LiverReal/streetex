@@ -357,6 +357,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
     let startY = 0;
     let oldBearing = 0;
     let oldPitch = 75;
+    let oldZoom = targetZoom;
 
 //camera panning (pc and touch)
     document.addEventListener('pointerdown', function(e) {
@@ -419,16 +420,16 @@ document.addEventListener('touchmove', (e) => {
     const zoomFactor = currentDistance / initialDistance;
     const zoomDistance = currentDistance - initialDistance;
 
-    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${zoomDistance * zoomSensitivity}`;
+    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${targetZoom}`;
 
     if (zoomFactor > 1.05) {
       touchZooming = true;
       //console.log("Zooming in");
-      targetZoom = zoomDistance * zoomSensitivity;
+      targetZoom = oldZoom + zoomDistance * zoomSensitivity;
     } else if (zoomFactor < 0.95) {
       touchZooming = true;
       //console.log("Zooming out");
-      targetZoom = zoomDistance * zoomSensitivity;
+      targetZoom = oldZoom + zoomDistance * zoomSensitivity;
     }
 
     // Optionally update initialDistance if you want continuous zoom detection
@@ -439,11 +440,13 @@ document.addEventListener('touchmove', (e) => {
 document.addEventListener('touchend', () => {
   initialDistance = null;
   touchZooming = false;
+  oldZoom = targetZoom;
 });
 
 document.addEventListener('touchcancel', () => {
   initialDistance = null;
   touchZooming = false;
+  oldZoom = targetZoom;
 });
 
 document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
@@ -462,7 +465,8 @@ function animateCamera() {
 
     currentBearing = lerp(currentBearing, targetBearing, lerpFactorCamera);
     currentPitch = lerp(currentPitch, targetPitch, lerpFactorCamera);
-    currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom)
+    currentZoom = targetZoom
+    //currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom)
 
     map.setBearing(currentBearing);
     map.setPitch(currentPitch);
