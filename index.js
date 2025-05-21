@@ -1,5 +1,5 @@
 //global vars
-const lerpFactorModel = 0.4; // Adjust for speed (closer to 1 = faster)
+const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
 
 
     import * as THREE from 'three';
@@ -295,6 +295,7 @@ let lerpFactorCamera = 0.2;
 let zoomSensitivity = 0.002;
 let bearingSensitivity = 0.1;
 let pitchSensitivity = 0.15;
+let dragWindow = 10;
 
 let currentZoom = map.getZoom();
 let targetZoom = map.getZoom();
@@ -309,10 +310,11 @@ let isTouch = false;
 function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
-  zoomSensitivity = 2;
+  zoomSensitivity = 1; //wont work changing from 1
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
     lerpFactorCamera = 0.7;
+    dragWindow = 30;
   window.removeEventListener('touchstart', handleTouch);
 }
 
@@ -323,6 +325,7 @@ function handleMouse() {
     bearingSensitivity = 0.12;
     pitchSensitivity = 0.13;
     lerpFactorCamera = 0.3;
+    dragWindow = 10;
   }
   window.removeEventListener('mousemove', handleMouse);
 }
@@ -366,7 +369,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
       const dy = e.clientY - startY;
       
 
-      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+      if (Math.abs(dx) > dragWindow || Math.abs(dy) > dragWindow) {
         isDragging = true;
         const centerY = window.innerHeight / 2;
         if (!touchZooming) {
