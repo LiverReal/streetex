@@ -291,8 +291,8 @@ map.doubleClickZoom.disable(); // disable zoom on double click (optional)
 //zoom vars
 
 // Lerp factor — controls speed (0.1 = 10% per frame)
-let lerpFactorCamera = 0.2;
-let lerpFactorZoom = 0.2;
+let lerpFactorCamera = 1;
+let lerpFactorZoom = 1;
 let zoomSensitivity = 0.002;
 let bearingSensitivity = 0.1;
 let pitchSensitivity = 0.15;
@@ -311,6 +311,7 @@ let isTouch = false;
 function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
+  document.getElementById("input").innerHTML = `touch`;
   zoomSensitivity = 0.001;
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
@@ -322,12 +323,13 @@ function handleTouch() {
 
 function handleMouse() {
   if (!isTouch) {
+    document.getElementById("input").innerHTML = `mouse`;
     console.log("User is using mouse input");
     zoomSensitivity = 0.001;
     bearingSensitivity = 0.12;
     pitchSensitivity = 0.13;
     lerpFactorCamera = 0.3;
-    lerpFactorZoom = 0.5;
+    lerpFactorZoom = 1;
     dragWindow = 10;
   }
   window.removeEventListener('mousemove', handleMouse);
