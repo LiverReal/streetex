@@ -417,17 +417,18 @@ document.addEventListener('touchmove', (e) => {
   if (e.touches.length === 2 && initialDistance !== null) {
     const currentDistance = getDistance(e.touches[0], e.touches[1]);
     const zoomFactor = currentDistance / initialDistance;
+    const zoomDistance = currentDistance - initialDistance;
 
-    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${(targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1)}`;
+    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${zoomDistance * zoomSensitivity}`;
 
     if (zoomFactor > 1.05) {
       touchZooming = true;
       //console.log("Zooming in");
-      targetZoom = (targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1);
+      targetZoom = zoomDistance * zoomSensitivity;
     } else if (zoomFactor < 0.95) {
       touchZooming = true;
       //console.log("Zooming out");
-      targetZoom = (targetZoom) * (((zoomFactor - 1) * zoomSensitivity) + 1);
+      targetZoom = zoomDistance * zoomSensitivity;
     }
 
     // Optionally update initialDistance if you want continuous zoom detection
