@@ -292,6 +292,7 @@ map.doubleClickZoom.disable(); // disable zoom on double click (optional)
 
 // Lerp factor — controls speed (0.1 = 10% per frame)
 let lerpFactorCamera = 0.2;
+let lerpFactorZoom = 0.2;
 let zoomSensitivity = 0.002;
 let bearingSensitivity = 0.1;
 let pitchSensitivity = 0.15;
@@ -314,6 +315,7 @@ function handleTouch() {
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
     lerpFactorCamera = 0.7;
+    lerpFactorZoom = 1;
     dragWindow = 20;
   window.removeEventListener('touchstart', handleTouch);
 }
@@ -325,6 +327,7 @@ function handleMouse() {
     bearingSensitivity = 0.12;
     pitchSensitivity = 0.13;
     lerpFactorCamera = 0.3;
+    lerpFactorZoom = 0.5;
     dragWindow = 10;
   }
   window.removeEventListener('mousemove', handleMouse);
@@ -456,7 +459,7 @@ function animateCamera() {
 
     currentBearing = lerp(currentBearing, targetBearing, lerpFactorCamera);
     currentPitch = lerp(currentPitch, targetPitch, lerpFactorCamera);
-    currentZoom = lerp(currentZoom, targetZoom, lerpFactorCamera)
+    currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom)
 
     map.setBearing(currentBearing);
     map.setPitch(currentPitch);
