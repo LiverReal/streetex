@@ -463,9 +463,12 @@ function animateCamera() {
     currentZoom = targetZoom
     //currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom)
 
-    map.setBearing(currentBearing);
-    map.setPitch(currentPitch);
-    map.zoomTo(currentZoom, { duration: 0 });
+   map.jumpTo({
+  center: map.getCenter(), // you can keep this same
+  zoom: currentZoom,
+  bearing: currentBearing,
+  pitch: currentPitch
+});
 
     requestAnimationFrame(animateCamera);
 }
