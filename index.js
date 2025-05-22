@@ -7,7 +7,7 @@ const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
 
     const map = new maplibregl.Map({
         container: 'map',
-        style: 'https://tiles.openfreemap.org/styles/liberty',
+        style: 'https://liverreal.github.io/streetex/style.json',
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
