@@ -1,6 +1,7 @@
 //global vars
 const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
 
+const canvas = document.getElementById('overlay');
 
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -269,10 +270,6 @@ function updateSkyLight(sunAltitude) {
 //first adding visuals
         map.addLayer(customLayer);
 
-map.getStyle().layers.forEach(layer => {
-  console.log(layer.id);
-});
-
 
 /*
 map.addSource('flat-dem', {
@@ -497,10 +494,33 @@ function animateCamera() {
 
 animateCamera();
 
+//canvas overlay
+  function resizeCanvas() {
+    canvas.width = map.getContainer().clientWidth;
+    canvas.height = map.getContainer().clientHeight;
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Now draw on canvas using context
+  const ctx = canvas.getContext('2d');
+
+// Create a linear gradient (left to right)
+const gradient = ctx.createLinearGradient(0, canvas.height*0.158, 0, canvas.height);
+
+// Define color stops (0 = start, 1 = end)
+gradient.addColorStop(0, "#9ce0e955");
+gradient.addColorStop(1, "#1886b811");
+
+// Use the gradient to fill a rectangle
+ctx.fillStyle = gradient;
+ctx.fillRect(0, canvas.height*0.158, canvas.width, canvas.height);
+
 console.log('All resources finished loading! (mostly)');
-    setTimeout(() => { 
-        document.getElementById("map").style.opacity = 1;
-    }, 300);
+    //setTimeout(() => { 
+    //    document.getElementById("map").style.opacity = 1;
+    //}, 300);
 
 
 });

@@ -7,3 +7,8 @@ https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6
 https://liverreal.github.io/streetex/style.json
 
 it only works for my github page so you cant do anything with the key
+
+
+free apis for game
+https://github.com/public-api-lists/public-api-lists?tab=readme-ov-file
+https://api.met.no/weatherapi/documentation 

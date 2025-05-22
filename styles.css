@@ -23,12 +23,16 @@
     display: none;
 }
 
-#map {
+#map, #overlay {
     position: fixed;
     height: 100%;
     width: 100vw;
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.5s ease-in-out;
+}
+
+#overlay {
+    pointer-events: none;
 }
 
 #debug {
