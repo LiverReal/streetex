@@ -350,6 +350,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
 
   // Clamp zoom within map's min/max zoom
   targetZoom = targetZoom + delta;
+  targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
 
 }, { passive: false });
 
@@ -378,11 +379,10 @@ map.getCanvas().addEventListener('wheel', (event) => {
 
       if (Math.abs(dx) > dragWindow || Math.abs(dy) > dragWindow || isDragging) {
         isDragging = true;
-        const centerY = window.innerHeight / 2;
         if (!touchZooming) {
           targetBearing = oldBearing + dx*bearingSensitivity;
-          oldPitch = Math.min(Math.max(oldPitch, map.getMinPitch()), map.getMaxPitch());
           targetPitch = oldPitch - dy*pitchSensitivity;
+          targetPitch = Math.min(Math.max(targetPitch, map.getMinPitch()), map.getMaxPitch());
         }
 
         //console.log(`Dragging... dx=${dx}, dy=${dy}`);
@@ -424,7 +424,7 @@ document.addEventListener('touchmove', (e) => {
     const currentDistance = getDistance(e.touches[0], e.touches[1]);
     const zoomDistance = currentDistance - initialDistance;
 
-    document.getElementById("debug").innerHTML = `yo guys this is zoomdistance: ${zoomDistance} initaldistance ${initialDistance} and uhh this is how much were zooming rn i think: ${targetZoom}`;
+    //document.getElementById("debug").innerHTML = `yo guys this is zoomdistance: ${zoomDistance} initaldistance ${initialDistance} and uhh this is how much were zooming rn i think: ${targetZoom}`;
 
     if (zoomDistance > zoomWindow || zoomDistance < -zoomWindow || touchZooming) {
       touchZooming = true;
@@ -452,11 +452,13 @@ function lerp(start, end, t) {
     return start + (end - start) * t;
 }
 
+let last = performance.now();
+
 function animateCamera() {
 
-    //console.log(targetZoom, targetPitch)
-    targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
-    targetPitch = Math.min(Math.max(targetPitch, map.getMinPitch()), map.getMaxPitch());
+  const delta = performance.now() - last;
+  document.getElementById("fps").innerHTML = `Frame delay: ${Math.round(delta)}ms`;
+  last = performance.now();
 
     currentBearing = lerp(currentBearing, targetBearing, lerpFactorCamera);
     currentPitch = lerp(currentPitch, targetPitch, lerpFactorCamera);

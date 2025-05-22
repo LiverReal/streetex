@@ -25,16 +25,16 @@
 
 #map {
     position: fixed;
-    width: 100vw;
-    height: 100vh;
+    height: 500px;
+    width: 500px;
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
 }
 
 #debug {
     position: fixed;
-    top: 10vh;
-    left: 10vw;
+    top: 500px;
     padding: 1vw;
     background-color: white;
+    display: block;
 }
