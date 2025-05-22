@@ -465,7 +465,7 @@ function animateCamera() {
 
     map.setBearing(currentBearing);
     map.setPitch(currentPitch);
-    map.zoomTo(currentZoom);
+    map.zoomTo(currentZoom, { duration: 0 });
 
     requestAnimationFrame(animateCamera);
 }
