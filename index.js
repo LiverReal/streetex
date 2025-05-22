@@ -313,11 +313,11 @@ function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
   document.getElementById("input").innerHTML = `touch`;
-  zoomSensitivity = 0.02;
+  zoomSensitivity = 0.015;
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
-    lerpFactorCamera = 1;
-    lerpFactorZoom = 1;
+    lerpFactorCamera = 0.7;
+    lerpFactorZoom = 0.7;
     dragWindow = 10;
     zoomWindow = 4;
   window.removeEventListener('touchstart', handleTouch);
@@ -327,11 +327,11 @@ function handleMouse() {
   if (!isTouch) {
     document.getElementById("input").innerHTML = `mouse`;
     console.log("User is using mouse input");
-    zoomSensitivity = 0.001;
-    bearingSensitivity = 0.12;
+    zoomSensitivity = 0.003;
+    bearingSensitivity = 0.2;
     pitchSensitivity = 0.13;
-    lerpFactorCamera = 1;
-    lerpFactorZoom = 1;
+    lerpFactorCamera = 0.7;
+    lerpFactorZoom = 0.7;
     dragWindow = 10;
   }
   window.removeEventListener('mousemove', handleMouse);
@@ -460,7 +460,7 @@ function animateCamera() {
 
     currentBearing = lerp(currentBearing, targetBearing, lerpFactorCamera);
     currentPitch = lerp(currentPitch, targetPitch, lerpFactorCamera);
-    currentZoom = targetZoom
+    currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom);
     //currentZoom = lerp(currentZoom, targetZoom, lerpFactorZoom)
 
    map.jumpTo({
