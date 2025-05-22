@@ -3,12 +3,22 @@ const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
 
 const canvas = document.getElementById('overlay');
 
+let path = [];
+
+// Load saved path
+const saved = localStorage.getItem("walkPath");
+if (saved) {
+  path = JSON.parse(saved);
+}
+
+
+
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
     const map = new maplibregl.Map({
         container: 'map',
-        style: 'https://liverreal.github.io/streetex/style.json',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
@@ -195,6 +205,9 @@ geolocateControl.on('geolocate', (event) => {
   const { latitude, longitude, accuracy } = event.coords;
   console.log(`You are at ${latitude}, ${longitude} with accuracy of ${accuracy} meters.`);
     setTimeout(() => moveModelTo([longitude, latitude]), 0);
+//bounds but they dont work idk
+/*
+
 const boundArea = 0.1;
 const bbox = [longitude-boundArea, latitude-boundArea, longitude+boundArea, latitude+boundArea]; // [west, south, east, north]
 
@@ -207,7 +220,7 @@ const filter = [
 ];
 
 map.setFilter("building-3d", filter);
-
+*/
     const now = new Date();
     //const now = new Date("Mon May 19 2025 13:19:15 GMT+0100 (British Summer Time)");
     //const now = new Date("Mon May 19 2025 23:19:15 GMT+0100 (British Summer Time)");
@@ -264,12 +277,64 @@ function updateSkyLight(sunAltitude) {
     });
 }
 
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+document.addEventListener('gesturechange', function (e) {
+    e.preventDefault();
+});
+document.addEventListener('gestureend', function (e) {
+    e.preventDefault();
+});
 
 
     map.on('load', () => {
 //first adding visuals
         map.addLayer(customLayer);
+  map.addSource("walk-path", {
+    type: "geojson",
+    data: {
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: path,
+      },
+    },
+  });
 
+  map.addLayer({
+    id: "walk-path-line",
+    type: "line",
+    source: "walk-path",
+    paint: {
+      "line-color": "#ff0000",
+      "line-width": 3,
+    },
+  });
+
+function updatePath(position) {
+  const coords = [position.coords.longitude, position.coords.latitude];
+  path.push(coords);
+
+  // Save to localStorage
+  localStorage.setItem("walkPath", JSON.stringify(path));
+
+  // Update GeoJSON source
+  if (map.getSource("walk-path")) {
+    map.getSource("walk-path").setData({
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: path,
+      },
+    });
+  }
+}
+
+navigator.geolocation.watchPosition(updatePath, console.error, {
+  enableHighAccuracy: true,
+  maximumAge: 1000,
+});
 
 /*
 map.addSource('flat-dem', {
@@ -510,12 +575,12 @@ animateCamera();
 const gradient = ctx.createLinearGradient(0, canvas.height*0.158, 0, canvas.height);
 
 // Define color stops (0 = start, 1 = end)
-gradient.addColorStop(0, "#9ce0e955");
-gradient.addColorStop(1, "#1886b811");
+gradient.addColorStop(0, "#46DAFFBB");
+gradient.addColorStop(1, "#1886b800");
 
 // Use the gradient to fill a rectangle
 ctx.fillStyle = gradient;
-ctx.fillRect(0, canvas.height*0.158, canvas.width, canvas.height);
+//ctx.fillRect(0, canvas.height*0.158, canvas.width, canvas.height);
 
 console.log('All resources finished loading! (mostly)');
     //setTimeout(() => { 
