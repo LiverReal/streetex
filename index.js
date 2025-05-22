@@ -7,8 +7,7 @@ const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
 
     const map = new maplibregl.Map({
         container: 'map',
-        style:
-            'https://tiles.openfreemap.org/styles/liberty',
+        style: 'https://tiles.openfreemap.org/styles/liberty',
         zoom: 18,
         maxZoom: 19,
         minZoom: 16,
@@ -17,6 +16,7 @@ const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
         maxPitch: 80,
         interactive: true,
         projection: 'globe',
+        renderWorldCopies: false,
         canvasContextAttributes: {antialias: true} // create the gl context with MSAA antialiasing, so custom layers are antialiased
     });
 
@@ -194,6 +194,19 @@ geolocateControl.on('geolocate', (event) => {
   const { latitude, longitude, accuracy } = event.coords;
   console.log(`You are at ${latitude}, ${longitude} with accuracy of ${accuracy} meters.`);
     setTimeout(() => moveModelTo([longitude, latitude]), 0);
+const boundArea = 0.1;
+const bbox = [longitude-boundArea, latitude-boundArea, longitude+boundArea, latitude+boundArea]; // [west, south, east, north]
+
+const filter = [
+  "all",
+  [">=", ["get", "lng"], bbox[0]],
+  ["<=", ["get", "lng"], bbox[2]],
+  [">=", ["get", "lat"], bbox[1]],
+  ["<=", ["get", "lat"], bbox[3]],
+];
+
+map.setFilter("building-3d", filter);
+
     const now = new Date();
     //const now = new Date("Mon May 19 2025 13:19:15 GMT+0100 (British Summer Time)");
     //const now = new Date("Mon May 19 2025 23:19:15 GMT+0100 (British Summer Time)");
@@ -256,6 +269,12 @@ function updateSkyLight(sunAltitude) {
 //first adding visuals
         map.addLayer(customLayer);
 
+map.getStyle().layers.forEach(layer => {
+  console.log(layer.id);
+});
+
+
+/*
 map.addSource('flat-dem', {
   type: 'raster-dem',
   tiles: ['tiles/{z}/{x}/{y}.png'],
@@ -266,6 +285,8 @@ map.addSource('flat-dem', {
 });
 
     //map.setTerrain({ source: 'flat-dem', exaggeration: 0 });
+*/
+
 
     map.setSky({
         'sky-color': "#72e7ff",
@@ -343,7 +364,6 @@ window.addEventListener('mousemove', handleMouse, { once: true });
 //camera zooming (pc)
 
 map.getCanvas().addEventListener('wheel', (event) => {
-  event.preventDefault();
 
   // Calculate zoom delta (invert wheel direction if needed)
   let delta = -event.deltaY * zoomSensitivity;
@@ -352,7 +372,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
   targetZoom = targetZoom + delta;
   targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
 
-}, { passive: false });
+}, { passive: true });
 
     let isMouseDown = false;
     let isDragging = false;
@@ -387,7 +407,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
 
         //console.log(`Dragging... dx=${dx}, dy=${dy}`);
       }
-    });
+    }, { passive: true });
 
     document.addEventListener('pointerup', function() {
       if (isDragging) {
@@ -436,7 +456,7 @@ document.addEventListener('touchmove', (e) => {
     // Optionally update initialDistance if you want continuous zoom detection
     // initialDistance = currentDistance;
   }
-}, { passive: false });
+}, { passive: true });
 
 document.addEventListener('touchend', () => {
   initialDistance = null;
