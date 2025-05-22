@@ -297,6 +297,7 @@ let zoomSensitivity = 0.002;
 let bearingSensitivity = 0.1;
 let pitchSensitivity = 0.15;
 let dragWindow = 10;
+let zoomWindow = 5;
 
 let currentZoom = map.getZoom();
 let targetZoom = map.getZoom();
@@ -312,12 +313,13 @@ function handleTouch() {
   isTouch = true;
   console.log("User is using touch input");
   document.getElementById("input").innerHTML = `touch`;
-  zoomSensitivity = 0.001;
+  zoomSensitivity = 0.02;
     bearingSensitivity = 0.4;
     pitchSensitivity = 0;
-    lerpFactorCamera = 0.7;
+    lerpFactorCamera = 1;
     lerpFactorZoom = 1;
-    dragWindow = 20;
+    dragWindow = 10;
+    zoomWindow = 4;
   window.removeEventListener('touchstart', handleTouch);
 }
 
@@ -328,7 +330,7 @@ function handleMouse() {
     zoomSensitivity = 0.001;
     bearingSensitivity = 0.12;
     pitchSensitivity = 0.13;
-    lerpFactorCamera = 0.3;
+    lerpFactorCamera = 1;
     lerpFactorZoom = 1;
     dragWindow = 10;
   }
@@ -362,7 +364,6 @@ map.getCanvas().addEventListener('wheel', (event) => {
 //camera panning (pc and touch)
     document.addEventListener('pointerdown', function(e) {
       isMouseDown = true;
-      isDragging = false;
       startX = e.clientX;
       startY = e.clientY;
 
@@ -375,7 +376,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
       const dy = e.clientY - startY;
       
 
-      if (Math.abs(dx) > dragWindow || Math.abs(dy) > dragWindow) {
+      if (Math.abs(dx) > dragWindow || Math.abs(dy) > dragWindow || isDragging) {
         isDragging = true;
         const centerY = window.innerHeight / 2;
         if (!touchZooming) {
@@ -391,6 +392,7 @@ map.getCanvas().addEventListener('wheel', (event) => {
     document.addEventListener('pointerup', function() {
       if (isDragging) {
         //console.log("drag ended");
+        isDragging = false;
     oldBearing = targetBearing;
       oldPitch = targetPitch;
       } else {
@@ -405,6 +407,9 @@ let initialDistance = null;
 function getDistance(touch1, touch2) {
   const dx = touch2.clientX - touch1.clientX;
   const dy = touch2.clientY - touch1.clientY;
+  // set e.touches length === 1 and toggle comments of these four for debugging on pc
+  //const dx = 0 - touch1.clientX;
+  //const dy = 0 - touch1.clientY;
   return Math.hypot(dx, dy);
 }
 
@@ -417,19 +422,15 @@ document.addEventListener('touchstart', (e) => {
 document.addEventListener('touchmove', (e) => {
   if (e.touches.length === 2 && initialDistance !== null) {
     const currentDistance = getDistance(e.touches[0], e.touches[1]);
-    const zoomFactor = currentDistance / initialDistance;
     const zoomDistance = currentDistance - initialDistance;
 
-    document.getElementById("debug").innerHTML = `yo guys this is zoomfactor: ${zoomFactor} and uhh this is how much were zooming rn i think: ${targetZoom}`;
+    document.getElementById("debug").innerHTML = `yo guys this is zoomdistance: ${zoomDistance} initaldistance ${initialDistance} and uhh this is how much were zooming rn i think: ${targetZoom}`;
 
-    if (zoomFactor > 1.05) {
+    if (zoomDistance > zoomWindow || zoomDistance < -zoomWindow || touchZooming) {
       touchZooming = true;
       //console.log("Zooming in");
       targetZoom = oldZoom + zoomDistance * zoomSensitivity;
-    } else if (zoomFactor < 0.95) {
-      touchZooming = true;
-      //console.log("Zooming out");
-      targetZoom = oldZoom + zoomDistance * zoomSensitivity;
+      targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
     }
 
     // Optionally update initialDistance if you want continuous zoom detection
@@ -438,12 +439,6 @@ document.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 document.addEventListener('touchend', () => {
-  initialDistance = null;
-  touchZooming = false;
-  oldZoom = targetZoom;
-});
-
-document.addEventListener('touchcancel', () => {
   initialDistance = null;
   touchZooming = false;
   oldZoom = targetZoom;
