@@ -1,5 +1,6 @@
 :root {
     --white: #f4f4f4;
+    --black: #373737;
 } 
 
 * {
@@ -38,8 +39,27 @@
 
 #debug {
     position: fixed;
-    top: 500px;
+    top: 300px;
     padding: 1vw;
     background-color: white;
     display: none;
+}
+
+#interface {
+    display: grid;
+    grid-template-rows: 4rem;
+}
+
+span {
+    position: relative;
+    color: var(--black);
+    background-color: var(--white);
+    outline: 0;
+    border: 0;
+    box-shadow: inset -4px -4px 7px rgb(189, 189, 189), inset 4px 4px 7px rgb(255, 255, 255), inset 0px 10px 0px rgb(42, 202, 255);
+    border-radius: 7px;
+    padding: 5px;
+    margin: 0.5rem;
+    padding: 1rem 1rem;
+    text-align: center;
 }

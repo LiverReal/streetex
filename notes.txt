@@ -1,14 +1,35 @@
 
-debug map api: 
-https://tiles.openfreemap.org/styles/liberty
-
-my map api:
-https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6
-https://liverreal.github.io/streetex/style.json
-
-it only works for my github page so you cant do anything with the key
 
 
 free apis for game
 https://github.com/public-api-lists/public-api-lists?tab=readme-ov-file
-https://api.met.no/weatherapi/documentation 
+https://api.met.no/weatherapi/documentation
+
+tuts:
+https://www.dawntraoz.com/blog/positioning-elements-with-grid/
+
+
+
+like before commiting:
+set map api and glb file
+my map api:
+https://api.protomaps.com/tiles/v4.json?key=50ad6769afe3dbd6
+https://liverreal.github.io/streetex/style.json
+it only works for my github page so you cant do anything with the key
+my gltf:
+https://liverreal.github.io/streetex/player.glb
+
+
+debugging:
+debug map api: 
+https://tiles.openfreemap.org/styles/liberty
+gltf:
+https://127.0.0.1:5500/menneske.glb
+
+gltf external:
+https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf
+
+
+
+
+

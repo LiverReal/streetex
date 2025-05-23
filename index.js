@@ -28,6 +28,7 @@ if (saved) {
         interactive: true,
         projection: 'globe',
         renderWorldCopies: false,
+        attributionControl: false,
         canvasContextAttributes: {antialias: true} // create the gl context with MSAA antialiasing, so custom layers are antialiased
     });
 
@@ -100,7 +101,7 @@ this.targetPosition = {
 
                 const loader = new GLTFLoader();
                 loader.load(
-                    'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf',
+                    'https://liverreal.github.io/streetex/player.glb',
                     (gltf) => {
                         gltf.scene.traverse(function (node) {
                             if (node.isMesh || node.isLight) {
@@ -130,7 +131,7 @@ this.targetPosition = {
 //model loop
 
 if (this.model) {
-this.model.rotation.y += 0.001; // Rotate around Y-axis
+this.model.rotation.y += 0.01; // Rotate around Y-axis
 this.model.position.y += 0; // Move up
 }
 
@@ -287,6 +288,9 @@ document.addEventListener('gestureend', function (e) {
     e.preventDefault();
 });
 
+const attributionControl = new maplibregl.AttributionControl({
+  compact: true
+});
 
     map.on('load', () => {
 //first adding visuals
@@ -331,10 +335,32 @@ function updatePath(position) {
   }
 }
 
+  const controls = document.querySelectorAll('.maplibregl-ctrl-geolocate');
+  controls.forEach(ctrl => ctrl.style.display = 'none');
+
 navigator.geolocation.watchPosition(updatePath, console.error, {
   enableHighAccuracy: true,
   maximumAge: 1000,
 });
+
+document.getElementById('geolocateI').addEventListener('click', () => {
+  geolocateControl.trigger();
+});
+
+document.getElementById('debugI').addEventListener('click', () => {
+  const el = document.getElementById('debug');
+  if (el.style.display === 'none' || el.style.display === '') {
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+});
+
+  const container = attributionControl.onAdd(map); // Get the DOM element
+  const html = container.innerHTML;
+
+  // Now inject it wherever you want
+  document.getElementById('attribution').innerHTML = html;
 
 /*
 map.addSource('flat-dem', {
@@ -398,7 +424,7 @@ function handleTouch() {
   document.getElementById("input").innerHTML = `touch`;
   zoomSensitivity = 0.015;
     bearingSensitivity = 0.4;
-    pitchSensitivity = 0;
+    pitchSensitivity = 0.3;
     lerpFactorCamera = 0.7;
     lerpFactorZoom = 0.7;
     dragWindow = 10;
