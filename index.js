@@ -131,7 +131,7 @@ this.targetPosition = {
 
 //model loop
 if (this.model) {
-this.model.rotation.y = walkingHeading/100; // Rotate around Y-axis
+this.model.rotation.y = degreestoRadians(walkingHeading); // turn walkingheading in degrees to radians
 this.model.position.y += 0; // Move up
 
 }
@@ -191,7 +191,38 @@ function moveModelTo(lngLat) {
     };
 }
 
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+    
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function getTotalDistance(path) {
+  let total = 0;
+  for (let i = 1; i < path.length; i++) {
+    const [lon1, lat1] = path[i - 1];
+    const [lon2, lat2] = path[i];
+    total += getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2);
+  }
+  return total;
+}
+
+function radiansToDegrees(radians) {
+    return radians * (180 / Math.PI);
+}
+
+function degreestoRadians(degrees) {
+    return degrees * (Math.PI / 180);
+}
 
 function calculateBearing(lat1, lon1, lat2, lon2) {
   const toRadians = deg => deg * Math.PI / 180;
@@ -619,9 +650,12 @@ function lerp(start, end, t) {
     return start + (end - start) * t;
 }
 
-
+let last = performance.now();
 
 function animateCamera() {
+    const delta = performance.now() - last;
+  document.getElementById("fps").innerHTML = `${Math.round(1000 / delta)} FPS, compass: ${compassHeading} You walked ${getTotalDistance(path).toFixed(2)}km`;
+  last = performance.now();
 
     if (compassEnabled) {
       targetBearing = compassHeading;
@@ -675,7 +709,7 @@ console.log('All resources finished loading! (mostly)');
 
 });
 
-let last = performance.now();
+
 
 map.on('render', () => {
 //update camera to player movement
@@ -698,7 +732,5 @@ map.on('render', () => {
     }
   }
 
-  const delta = performance.now() - last;
-  document.getElementById("fps").innerHTML = `${Math.round(1000 / delta)} FPS`;
-  last = performance.now();
+
 });
