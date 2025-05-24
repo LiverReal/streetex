@@ -1,5 +1,8 @@
 //global vars
 const lerpFactorModel = 0.1; // Adjust for speed (closer to 1 = faster)
+let lastPosition = null;
+let walkingHeading = 0;
+let compassHeading = null;
 
 const canvas = document.getElementById('overlay');
 
@@ -10,8 +13,6 @@ const saved = localStorage.getItem("walkPath");
 if (saved) {
   path = JSON.parse(saved);
 }
-
-
 
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -24,7 +25,7 @@ if (saved) {
         minZoom: 16,
         center: [59.408384, 10.452992],
         pitch: 75,
-        maxPitch: 80,
+        maxPitch: 85,
         interactive: true,
         projection: 'globe',
         renderWorldCopies: false,
@@ -129,10 +130,10 @@ this.targetPosition = {
             render(gl, args) {
 
 //model loop
-
 if (this.model) {
-this.model.rotation.y += 0.01; // Rotate around Y-axis
+this.model.rotation.y = walkingHeading/100; // Rotate around Y-axis
 this.model.position.y += 0; // Move up
+
 }
 
 // Smooth interpolation (lerp)
@@ -190,13 +191,32 @@ function moveModelTo(lngLat) {
     };
 }
 
+
+
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const toRadians = deg => deg * Math.PI / 180;
+  const toDegrees = rad => rad * 180 / Math.PI;
+
+  const φ1 = toRadians(lat1);
+  const φ2 = toRadians(lat2);
+  const Δλ = toRadians(lon2 - lon1);
+
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) -
+            Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+  let θ = Math.atan2(y, x);
+  θ = toDegrees(θ);
+  return (θ + 360) % 360;  // Normalize to 0-360 degrees
+}
+
 // move to your own location
 const geolocateControl = new maplibregl.GeolocateControl({
   positionOptions: {
     enableHighAccuracy: true
   },
   trackUserLocation: true,
-  showUserHeading: true,
+  showUserHeading: false,
   showUserLocation: false
 });
 map.addControl(geolocateControl);
@@ -221,7 +241,27 @@ const filter = [
 ];
 
 map.setFilter("building-3d", filter);
-*/
+*/  
+  let compassHeading = event.coords.heading; // in degrees (0 = north, 90 = east, etc.)
+  if (compassHeading !== null) {
+    console.log('Current compass heading:', compassHeading);
+  } else {
+    console.log('Compass not available');
+  }
+    if (lastPosition) {
+    const newHeading = calculateBearing(
+      lastPosition.latitude, lastPosition.longitude,
+      event.coords.latitude, event.coords.longitude
+    );
+
+    walkingHeading = newHeading;
+    console.log('Walking heading based on movement:', walkingHeading);
+  }
+
+  lastPosition = {
+    latitude: event.coords.latitude,
+    longitude: event.coords.longitude
+  };
     const now = new Date();
     //const now = new Date("Mon May 19 2025 13:19:15 GMT+0100 (British Summer Time)");
     //const now = new Date("Mon May 19 2025 23:19:15 GMT+0100 (British Summer Time)");
@@ -294,7 +334,7 @@ const attributionControl = new maplibregl.AttributionControl({
 
     map.on('load', () => {
 //first adding visuals
-        map.addLayer(customLayer);
+
   map.addSource("walk-path", {
     type: "geojson",
     data: {
@@ -310,10 +350,17 @@ const attributionControl = new maplibregl.AttributionControl({
     id: "walk-path-line",
     type: "line",
     source: "walk-path",
-    paint: {
-      "line-color": "#ff0000",
-      "line-width": 3,
-    },
+  paint: {
+    'line-color': '#007AFF',         // a vibrant blue
+    'line-width': 4,                 // thicker line
+    'line-opacity': 0.8,            // a bit transparent
+    'line-blur': 0.5,               // soft edge
+    'line-dasharray': [2, 4],       // dashed line
+  },
+  layout: {
+    'line-cap': 'round',
+    'line-join': 'round'
+  }
   });
 
 function updatePath(position) {
@@ -334,13 +381,14 @@ function updatePath(position) {
     });
   }
 }
+        map.addLayer(customLayer);
 
   const controls = document.querySelectorAll('.maplibregl-ctrl-geolocate');
   controls.forEach(ctrl => ctrl.style.display = 'none');
 
 navigator.geolocation.watchPosition(updatePath, console.error, {
   enableHighAccuracy: true,
-  maximumAge: 1000,
+  maximumAge: 5000,
 });
 
 document.getElementById('geolocateI').addEventListener('click', () => {
@@ -353,6 +401,17 @@ document.getElementById('debugI').addEventListener('click', () => {
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
+  }
+});
+
+let compassEnabled = false;
+document.getElementById('compassI').addEventListener('click', () => {
+  if (!compassEnabled && compassHeading != null) {
+    compassEnabled = true;
+    console.log("compass enabled");
+  } else {
+    compassEnabled = false;
+    console.log("compass disabled");
   }
 });
 
@@ -423,9 +482,9 @@ function handleTouch() {
   console.log("User is using touch input");
   document.getElementById("input").innerHTML = `touch`;
   zoomSensitivity = 0.015;
-    bearingSensitivity = 0.4;
-    pitchSensitivity = 0.3;
-    lerpFactorCamera = 0.7;
+    bearingSensitivity = 0.6;
+    pitchSensitivity = 0.4;
+    lerpFactorCamera = 0.5;
     lerpFactorZoom = 0.7;
     dragWindow = 10;
     zoomWindow = 4;
@@ -524,6 +583,7 @@ function getDistance(touch1, touch2) {
 document.addEventListener('touchstart', (e) => {
   if (e.touches.length === 2) {
     initialDistance = getDistance(e.touches[0], e.touches[1]);
+    touchZooming = true;
   }
 });
 
@@ -535,7 +595,6 @@ document.addEventListener('touchmove', (e) => {
     //document.getElementById("debug").innerHTML = `yo guys this is zoomdistance: ${zoomDistance} initaldistance ${initialDistance} and uhh this is how much were zooming rn i think: ${targetZoom}`;
 
     if (zoomDistance > zoomWindow || zoomDistance < -zoomWindow || touchZooming) {
-      touchZooming = true;
       //console.log("Zooming in");
       targetZoom = oldZoom + zoomDistance * zoomSensitivity;
       targetZoom = Math.min(Math.max(targetZoom, map.getMinZoom()), map.getMaxZoom());
@@ -560,13 +619,13 @@ function lerp(start, end, t) {
     return start + (end - start) * t;
 }
 
-let last = performance.now();
+
 
 function animateCamera() {
 
-  const delta = performance.now() - last;
-  document.getElementById("fps").innerHTML = `Frame delay: ${Math.round(delta)}ms`;
-  last = performance.now();
+    if (compassEnabled) {
+      targetBearing = compassHeading;
+    }
 
     currentBearing = lerp(currentBearing, targetBearing, lerpFactorCamera);
     currentPitch = lerp(currentPitch, targetPitch, lerpFactorCamera);
@@ -616,6 +675,8 @@ console.log('All resources finished loading! (mostly)');
 
 });
 
+let last = performance.now();
+
 map.on('render', () => {
 //update camera to player movement
   if (customLayer.currentPosition) {
@@ -636,4 +697,8 @@ map.on('render', () => {
       map.jumpTo({ center: [lngLat.lng, lngLat.lat] });
     }
   }
+
+  const delta = performance.now() - last;
+  document.getElementById("fps").innerHTML = `${Math.round(1000 / delta)} FPS`;
+  last = performance.now();
 });

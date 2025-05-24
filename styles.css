@@ -47,7 +47,7 @@
 
 #interface {
     display: grid;
-    grid-template-rows: 4rem;
+    grid-template-rows: 1fr;
 }
 
 span {
@@ -62,4 +62,5 @@ span {
     margin: 0.5rem;
     padding: 1rem 1rem;
     text-align: center;
+    width: 10rem;
 }
